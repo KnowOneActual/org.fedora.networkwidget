@@ -1,0 +1,23 @@
+{
+    "KPlugin": {
+        "Name": "Network Info Widget",
+        "Description": "Displays active interface, local IP, public IP, and DNS server addresses in a minimal layout.",
+        "Icon": "network-wired",
+        "Id": "org.fedora.networkwidget",
+        "Version": "1.0",
+        "Category": "Network",
+        "License": "GPL",
+        "Authors": [
+            {
+                "Name": "Beau Bremer"
+            }
+        ],
+        "EnabledByDefault": true,
+        "ServiceTypes": [
+            "Plasma/Applet"
+        ]
+    },
+    "KPackageStructure": "Plasma/Applet",
+    "X-Plasma-API-Minimum-Version": "6.0",
+    "X-Plasma-MainScript": "ui/main.qml"
+}

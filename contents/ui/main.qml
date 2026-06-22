@@ -10,6 +10,10 @@ import org.kde.kquickcontrolsaddons as KQuickControlsAddons
 PlasmoidItem {
     id: root
 
+    // Sizing propagation to the parent Plasma container
+    implicitWidth: fullRepresentationItem ? fullRepresentationItem.implicitWidth : Kirigami.Units.gridUnit * 16
+    implicitHeight: fullRepresentationItem ? fullRepresentationItem.implicitHeight : Kirigami.Units.gridUnit * 10
+
     // Properties to store network data
     property string interfaceName: "None"
     property string localIp: "..."
@@ -166,7 +170,9 @@ PlasmoidItem {
 
         ColumnLayout {
             id: mainLayout
-            anchors.fill: parent
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: parent.top
             anchors.margins: Kirigami.Units.largeSpacing
             spacing: Kirigami.Units.smallSpacing
 

@@ -10,9 +10,9 @@ import org.kde.kquickcontrolsaddons as KQuickControlsAddons
 PlasmoidItem {
     id: root
 
-    // Sizing propagation to the parent Plasma container
-    implicitWidth: fullRepresentationItem ? fullRepresentationItem.implicitWidth : Kirigami.Units.gridUnit * 16
-    implicitHeight: fullRepresentationItem ? fullRepresentationItem.implicitHeight : Kirigami.Units.gridUnit * 10
+    // Stable sizing for the Plasma container
+    implicitWidth: Kirigami.Units.gridUnit * 16
+    implicitHeight: Kirigami.Units.gridUnit * 11.5
 
     // Properties to store network data
     property string interfaceName: "None"
@@ -166,13 +166,11 @@ PlasmoidItem {
     fullRepresentation: Item {
         id: panelItem
         implicitWidth: Kirigami.Units.gridUnit * 16
-        implicitHeight: mainLayout.implicitHeight + Kirigami.Units.largeSpacing * 2
+        implicitHeight: Kirigami.Units.gridUnit * 11.5
 
         ColumnLayout {
             id: mainLayout
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: parent.top
+            anchors.fill: parent
             anchors.margins: Kirigami.Units.largeSpacing
             spacing: Kirigami.Units.smallSpacing
 
@@ -355,6 +353,11 @@ PlasmoidItem {
                             }
                         }
                     }
+                }
+
+                // Vertical spacer to push rows to the top if there are fewer active lines (e.g. IPv6 offline)
+                Item {
+                    Layout.fillHeight: true
                 }
             }
         }

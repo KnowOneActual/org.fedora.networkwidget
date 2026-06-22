@@ -128,6 +128,74 @@ def get_wifi_details(interface):
         pass
     return None, None
 
+def get_vlan_details(interface):
+    if not interface or interface == "None":
+        return None
+    uevent_path = f"/sys/class/net/{interface}/uevent"
+    if not os.path.exists(uevent_path):
+        return None
+    try:
+        is_vlan = False
+        with open(uevent_path, "r", encoding="utf-8", errors="replace") as f:
+            for line in f:
+                if "DEVTYPE=vlan" in line:
+                    is_vlan = True
+                    break
+        if not is_vlan:
+            return None
+        
+        # Get parent interface
+        parent = None
+        net_dir = f"/sys/class/net/{interface}"
+        if os.path.exists(net_dir):
+            for entry in os.listdir(net_dir):
+                if entry.startswith("lower_"):
+                    parent = entry[6:] # extract parent interface name
+                    break
+
+        # Get VLAN ID
+        vlan_id = None
+        try:
+            res = subprocess.run(["ip", "-d", "link", "show", interface], capture_output=True, text=True, errors="replace", check=True)
+            match = re.search(r'vlan\s+id\s+(\d+)', res.stdout)
+            if match:
+                vlan_id = match.group(1)
+            else:
+                match = re.search(r'id\s+(\d+)', res.stdout)
+                if match:
+                    vlan_id = match.group(1)
+        except Exception:
+            pass
+
+        return {
+            "vlan_id": vlan_id or "Unknown",
+            "parent": parent or "Unknown"
+        }
+    except Exception:
+        pass
+    return None
+
+def get_vpn_details():
+    try:
+        res = subprocess.run(["nmcli", "-t", "-f", "name,type,active", "connection", "show"], capture_output=True, text=True, errors="replace", check=True)
+        for line in res.stdout.splitlines():
+            parts = line.strip().split(":")
+            if len(parts) >= 3:
+                name, conn_type, active = parts[0], parts[1], parts[2]
+                if active == "yes" and (conn_type in ("vpn", "wireguard", "tun")):
+                    return {
+                        "vpn_active": True,
+                        "vpn_name": name,
+                        "vpn_type": conn_type
+                    }
+    except Exception:
+        pass
+    return {
+        "vpn_active": False,
+        "vpn_name": "None",
+        "vpn_type": "None"
+    }
+
 def is_ipv6_hidden_by_config():
     try:
         config_path = os.path.expanduser("~/.config/plasma-org.kde.plasma.desktop-appletsrc")
@@ -173,6 +241,8 @@ def main():
     gateway = get_default_gateway()
     dns = get_dns_servers(iface)
     ssid, signal = get_wifi_details(iface)
+    vlan_details = get_vlan_details(iface)
+    vpn_details = get_vpn_details()
     
     # Determine IPv6 visibility
     hide_ipv6_opt = args.hide_ipv6
@@ -193,7 +263,13 @@ def main():
         "public_ipv6": public_ipv6,
         "dns": dns,
         "wifi_ssid": ssid or "None",
-        "wifi_signal": signal or "None"
+        "wifi_signal": signal or "None",
+        "vlan_active": vlan_details is not None,
+        "vlan_id": vlan_details["vlan_id"] if vlan_details else "None",
+        "vlan_parent": vlan_details["parent"] if vlan_details else "None",
+        "vpn_active": vpn_details["vpn_active"],
+        "vpn_name": vpn_details["vpn_name"],
+        "vpn_type": vpn_details["vpn_type"]
     }
     
     # Default behavior: print JSON if not a TTY or if requested, otherwise print human-readable
@@ -216,12 +292,20 @@ def main():
             iface_str += f" (SSID: {data['wifi_ssid']}, Signal: {data['wifi_signal']}%)"
         print(f"{BOLD}Interface:{RESET}       {iface_str}")
         
+        if data["vlan_active"]:
+            print(f"{BOLD}VLAN ID:{RESET}         {data['vlan_id']} (Parent: {data['vlan_parent']})")
+            
         print(f"{BOLD}Local IPv4:{RESET}      {data['local_ip']}")
         if data["gateway"] != "None":
             print(f"{BOLD}Default Gateway:{RESET} {data['gateway']}")
             
         if not hide_ipv6_opt and data["local_ipv6"] != "None":
             print(f"{BOLD}Local IPv6:{RESET}      {data['local_ipv6']}")
+            
+        if data["vpn_active"]:
+            print(f"{BOLD}VPN:{RESET}             Active ({data['vpn_name']})")
+        else:
+            print(f"{BOLD}VPN:{RESET}             Disconnected")
             
         pub_ip = data["public_ip"]
         if pub_ip == "Offline":

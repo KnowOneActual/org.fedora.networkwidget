@@ -26,10 +26,30 @@ PlasmoidItem {
     property string wifiSignal: "None"
     property bool isRefreshing: false
     property bool isOnline: false
+    property bool vlanActive: false
+    property string vlanId: "None"
+    property string vlanParent: "None"
+    property bool vpnActive: false
+    property string vpnName: "None"
+    property string vpnType: "None"
 
     // Configuration change listeners
     readonly property bool showIPv6: plasmoid.configuration.showIPv6
     onShowIPv6Changed: root.refresh()
+    readonly property bool showVlan: plasmoid.configuration.showVlan
+    onShowVlanChanged: root.refresh()
+    readonly property bool showVpn: plasmoid.configuration.showVpn
+    onShowVpnChanged: root.refresh()
+    readonly property bool showLatency: plasmoid.configuration.showLatency
+    onShowLatencyChanged: root.refresh()
+    readonly property bool showBandwidth: plasmoid.configuration.showBandwidth
+    onShowBandwidthChanged: root.refresh()
+    readonly property bool showMacAddress: plasmoid.configuration.showMacAddress
+    onShowMacAddressChanged: root.refresh()
+    readonly property bool showExtendedWifi: plasmoid.configuration.showExtendedWifi
+    onShowExtendedWifiChanged: root.refresh()
+    readonly property bool showGeo: plasmoid.configuration.showGeo
+    onShowGeoChanged: root.refresh()
 
     // System theme colors
     readonly property color textColor: Kirigami.Theme.textColor
@@ -88,6 +108,12 @@ PlasmoidItem {
         }
         list.push({ "label": "Interface", "value": interfaceVal, "rawValue": root.interfaceName });
         
+        // VLAN ID & Parent (if showVlan is enabled and vlan is active)
+        if (plasmoid.configuration.showVlan && root.vlanActive) {
+            var vlanVal = root.vlanId + " (Parent: " + root.vlanParent + ")";
+            list.push({ "label": "VLAN ID", "value": vlanVal, "rawValue": root.vlanId });
+        }
+        
         // Local IPs & Gateway
         list.push({ "label": "Local IPv4", "value": root.localIp, "rawValue": root.localIp });
         if (root.gateway !== "None" && root.gateway !== "") {
@@ -95,6 +121,12 @@ PlasmoidItem {
         }
         if (plasmoid.configuration.showIPv6 && root.localIpv6 !== "None" && root.localIpv6 !== "") {
             list.push({ "label": "Local IPv6", "value": root.localIpv6, "rawValue": root.localIpv6 });
+        }
+        
+        // VPN (if showVpn is enabled)
+        if (plasmoid.configuration.showVpn) {
+            var vpnVal = root.vpnActive ? "Active (" + root.vpnName + ")" : "Disconnected";
+            list.push({ "label": "VPN Connection", "value": vpnVal, "rawValue": root.vpnActive ? root.vpnName : "Disconnected" });
         }
         
         // Public IPs
@@ -129,6 +161,14 @@ PlasmoidItem {
                     root.publicIpv6 = parsed.public_ipv6 || "Offline";
                     root.wifiSsid = parsed.wifi_ssid || "None";
                     root.wifiSignal = parsed.wifi_signal || "None";
+                    
+                    root.vlanActive = parsed.vlan_active || false;
+                    root.vlanId = parsed.vlan_id || "None";
+                    root.vlanParent = parsed.vlan_parent || "None";
+                    
+                    root.vpnActive = parsed.vpn_active || false;
+                    root.vpnName = parsed.vpn_name || "None";
+                    root.vpnType = parsed.vpn_type || "None";
                     
                     if (parsed.dns && parsed.dns.length > 0) {
                         root.dnsInfo = parsed.dns.join(", ");

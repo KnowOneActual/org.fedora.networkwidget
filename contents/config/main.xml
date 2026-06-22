@@ -8,5 +8,26 @@
 		<entry name="showIPv6" type="bool">
 			<default>true</default>
 		</entry>
+		<entry name="showVlan" type="bool">
+			<default>false</default>
+		</entry>
+		<entry name="showVpn" type="bool">
+			<default>false</default>
+		</entry>
+		<entry name="showLatency" type="bool">
+			<default>false</default>
+		</entry>
+		<entry name="showBandwidth" type="bool">
+			<default>false</default>
+		</entry>
+		<entry name="showMacAddress" type="bool">
+			<default>false</default>
+		</entry>
+		<entry name="showExtendedWifi" type="bool">
+			<default>false</default>
+		</entry>
+		<entry name="showGeo" type="bool">
+			<default>false</default>
+		</entry>
 	</group>
 </kcfg>

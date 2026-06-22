@@ -18,4 +18,5 @@ All notable changes to this project will be documented in this file.
 
 ### Fixed
 - Fixed QML warning regarding anchors used directly inside a `RowLayout` delegate.
+- Fixed widget container height clipping, ensuring the card background wraps correctly around all lines of text.
 - Cleaned up build files by adding `*.plasmoid` to `.gitignore`.

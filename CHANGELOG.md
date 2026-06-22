@@ -2,6 +2,20 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2026-06-22
+
+### Added
+- **Latency / Ping Check:** Measures and displays connection ping to check network quality.
+- **Subnet CIDR & MAC Address:** Exposes local subnet CIDR (e.g., `/22`) and hardware MAC address.
+- **Real-time Bandwidth (Speed & Usage):** Calculates real-time Rx/Tx speeds and formats total session data downloaded/uploaded.
+- **Extended Wi-Fi Details:** Shows frequency band (2.4 GHz/5 GHz/6 GHz), channel, max transfer rate, and security protocol of the active Wi-Fi.
+- **ISP & Geolocation:** Displays public network ISP provider, city, and country.
+- **Pre-packaged Widget Archive:** Added `org.fedora.networkwidget.plasmoid` directly to the repository for quick manual installations.
+
+### Fixed
+- **Safe Sizing and Reference Error Fix:** Resolved a `ReferenceError` when binding the root widget height by referencing `fullRepresentationItem` instead of `mainLayout` before initialization.
+- **Ignore Rule Update:** Updated `.gitignore` to no longer ignore `.plasmoid` files.
+
 ## [1.2.1] - 2026-06-21
 
 ### Fixed

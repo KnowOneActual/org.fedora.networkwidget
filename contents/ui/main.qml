@@ -12,7 +12,7 @@ PlasmoidItem {
 
     // Stable sizing for the Plasma container
     implicitWidth: Kirigami.Units.gridUnit * 18
-    implicitHeight: Kirigami.Units.gridUnit * 15
+    implicitHeight: root.fullRepresentationItem ? root.fullRepresentationItem.implicitHeight : Kirigami.Units.gridUnit * 15
 
     // Properties to store network data
     property string interfaceName: "None"
@@ -32,6 +32,19 @@ PlasmoidItem {
     property bool vpnActive: false
     property string vpnName: "None"
     property string vpnType: "None"
+    property string latency: "None"
+    property string macAddress: "None"
+    property string rxSpeed: "0 B/s"
+    property string txSpeed: "0 B/s"
+    property string totalRx: "0 B"
+    property string totalTx: "0 B"
+    property string wifiBand: "None"
+    property string wifiChannel: "None"
+    property string wifiRate: "None"
+    property string wifiSecurity: "None"
+    property string geoIsp: "None"
+    property string geoCity: "None"
+    property string geoCountry: "None"
 
     // Configuration change listeners
     readonly property bool showIPv6: plasmoid.configuration.showIPv6
@@ -114,6 +127,12 @@ PlasmoidItem {
             list.push({ "label": "VLAN ID", "value": vlanVal, "rawValue": root.vlanId });
         }
         
+        // Wi-Fi details (if showExtendedWifi is enabled and Wi-Fi SSID is active)
+        if (plasmoid.configuration.showExtendedWifi && root.wifiSsid !== "None") {
+            var wifiVal = root.wifiBand + ", Ch " + root.wifiChannel + ", " + root.wifiSecurity + ", " + root.wifiRate;
+            list.push({ "label": "Wi-Fi Details", "value": wifiVal, "rawValue": wifiVal });
+        }
+        
         // Local IPs & Gateway
         list.push({ "label": "Local IPv4", "value": root.localIp, "rawValue": root.localIp });
         if (root.gateway !== "None" && root.gateway !== "") {
@@ -121,6 +140,11 @@ PlasmoidItem {
         }
         if (plasmoid.configuration.showIPv6 && root.localIpv6 !== "None" && root.localIpv6 !== "") {
             list.push({ "label": "Local IPv6", "value": root.localIpv6, "rawValue": root.localIpv6 });
+        }
+        
+        // MAC Address (if showMacAddress is enabled)
+        if (plasmoid.configuration.showMacAddress && root.macAddress !== "None" && root.macAddress !== "") {
+            list.push({ "label": "MAC Address", "value": root.macAddress, "rawValue": root.macAddress });
         }
         
         // VPN (if showVpn is enabled)
@@ -135,8 +159,28 @@ PlasmoidItem {
             list.push({ "label": "Public IPv6", "value": root.publicIpv6, "rawValue": root.publicIpv6 });
         }
         
+        // ISP & Geolocation (if showGeo is enabled)
+        if (plasmoid.configuration.showGeo && root.geoIsp !== "None" && root.geoIsp !== "") {
+            list.push({ "label": "ISP", "value": root.geoIsp, "rawValue": root.geoIsp });
+            var geoLoc = root.geoCity + ", " + root.geoCountry;
+            list.push({ "label": "Location", "value": geoLoc, "rawValue": geoLoc });
+        }
+        
         // DNS
         list.push({ "label": "DNS Servers", "value": root.dnsInfo, "rawValue": root.dnsInfo });
+        
+        // Connection Latency (if showLatency is enabled)
+        if (plasmoid.configuration.showLatency && root.latency !== "None" && root.latency !== "") {
+            list.push({ "label": "Latency", "value": root.latency, "rawValue": root.latency });
+        }
+        
+        // Bandwidth Speeds & Usage (if showBandwidth is enabled)
+        if (plasmoid.configuration.showBandwidth) {
+            var speedVal = "Rx: " + root.rxSpeed + " | Tx: " + root.txSpeed;
+            list.push({ "label": "Bandwidth Speed", "value": speedVal, "rawValue": speedVal });
+            var dataVal = "Down: " + root.totalRx + " | Up: " + root.totalTx;
+            list.push({ "label": "Session Data", "value": dataVal, "rawValue": dataVal });
+        }
         
         return list;
     }
@@ -170,6 +214,20 @@ PlasmoidItem {
                     root.vpnName = parsed.vpn_name || "None";
                     root.vpnType = parsed.vpn_type || "None";
                     
+                    root.latency = parsed.latency || "None";
+                    root.macAddress = parsed.mac_address || "None";
+                    root.rxSpeed = parsed.rx_speed || "0 B/s";
+                    root.txSpeed = parsed.tx_speed || "0 B/s";
+                    root.totalRx = parsed.total_rx || "0 B";
+                    root.totalTx = parsed.total_tx || "0 B";
+                    root.wifiBand = parsed.wifi_band || "None";
+                    root.wifiChannel = parsed.wifi_channel || "None";
+                    root.wifiRate = parsed.wifi_rate || "None";
+                    root.wifiSecurity = parsed.wifi_security || "None";
+                    root.geoIsp = parsed.geo_isp || "None";
+                    root.geoCity = parsed.geo_city || "None";
+                    root.geoCountry = parsed.geo_country || "None";
+                    
                     if (parsed.dns && parsed.dns.length > 0) {
                         root.dnsInfo = parsed.dns.join(", ");
                     } else {
@@ -194,6 +252,21 @@ PlasmoidItem {
                 cmd += " --hide-ipv6";
             } else {
                 cmd += " --show-ipv6";
+            }
+            if (plasmoid.configuration.showLatency) {
+                cmd += " --show-latency";
+            }
+            if (plasmoid.configuration.showBandwidth) {
+                cmd += " --show-bandwidth";
+            }
+            if (plasmoid.configuration.showMacAddress) {
+                cmd += " --show-mac";
+            }
+            if (plasmoid.configuration.showExtendedWifi) {
+                cmd += " --show-extended-wifi";
+            }
+            if (plasmoid.configuration.showGeo) {
+                cmd += " --show-geo";
             }
             connectSource(cmd);
         }

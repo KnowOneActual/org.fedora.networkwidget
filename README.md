@@ -23,10 +23,26 @@ A minimal, native network info widget for KDE Plasma 6 (tested on Fedora). It di
 - Python 3.x
 - `NetworkManager` (`nmcli`) or `systemd-resolved` (`resolvectl`)
 
-## Installation & Development
+## 🚀 Installation & Setup
 
-### Manual installation
-If you have the `.plasmoid` package, install it using `kpackagetool6`:
+Choose the installation method that works best for you.
+
+### Method 1: Quick Install from Source (Recommended)
+This is the fastest way to get the latest features directly from GitHub.
+
+```bash
+# 1. Clone the repository into your local Plasma widgets directory
+git clone https://github.com/KnowOneActual/org.fedora.networkwidget.git ~/.local/share/plasma/plasmoids/org.fedora.networkwidget
+
+# 2. Rebuild the KDE configuration cache
+kbuildsycoca6
+
+# 3. Restart the Plasma shell to load the widget
+systemctl --user restart plasma-plasmashell
+```
+
+### Method 2: Installing a `.plasmoid` Package
+If you downloaded a pre-packaged `.plasmoid` file, install it via the terminal using `kpackagetool6`:
 
 ```bash
 # To install for the first time
@@ -36,65 +52,72 @@ kpackagetool6 --type Plasma/Applet --install org.fedora.networkwidget.plasmoid
 kpackagetool6 --type Plasma/Applet --upgrade org.fedora.networkwidget.plasmoid
 ```
 
-### Installation from source (Git)
-If you just want to install the latest source directly:
+### Method 3: Development Setup (Symbolic Link)
+If you want to contribute or customize the widget locally, clone it to your development folder and link it:
 
 ```bash
-# Clone the repository directly into your Plasma widgets directory
-git clone https://github.com/KnowOneActual/org.fedora.networkwidget.git ~/.local/share/plasma/plasmoids/org.fedora.networkwidget
+# 1. Clone to your development folder
+git clone https://github.com/KnowOneActual/org.fedora.networkwidget.git ~/projects/org.fedora.networkwidget
 
-# Rebuild KDE configuration cache and restart the shell
+# 2. Symlink into your Plasma widgets directory
+ln -s ~/projects/org.fedora.networkwidget ~/.local/share/plasma/plasmoids/org.fedora.networkwidget
+
+# 3. Reload Plasma to apply changes
 kbuildsycoca6
 systemctl --user restart plasma-plasmashell
 ```
+*Tip: With this setup, any changes you make in your dev folder are reflected immediately. Just run `systemctl --user restart plasma-plasmashell` to apply visual edits.*
 
-### Development Setup (Recommended)
-If you want to modify or develop the widget, it is best to clone it to your projects directory and create a symbolic link to the Plasma folder:
+---
+
+## 🎨 How to Add the Widget
+Once installed, follow these steps to add it to your desktop:
+1. **Right-click** on your desktop wallpaper or panel.
+2. Click **Add Widgets...** (or press `Meta+Alt+A`).
+3. Search for **"Network Info Widget"**.
+4. **Drag and drop** it onto your desktop or panel!
+
+---
+
+## ⚙️ Configuration & Advanced Features
+To keep the widget minimal, advanced network details are **opt-in** and can be enabled through the configuration settings:
+
+1. Right-click the widget on your desktop and select **Configure Network Info Widget...** (or click the gear icon).
+2. Toggle any of the following features under the settings page:
+   - **Show VLAN details:** Extracts VLAN ID and parent interface.
+   - **Show VPN connection status:** Displays active VPN profiles.
+   - **Show connection latency (Ping):** Computes latency to check network quality.
+   - **Show Subnet CIDR & MAC address:** Displays local CIDR (e.g. `/24`) and hardware address.
+   - **Show real-time bandwidth (Speed & Usage):** Calculates real-time Rx/Tx bandwidth speeds and total session traffic.
+   - **Show extended Wi-Fi information:** Displays band (5 GHz/2.4 GHz), channel, security protocols, and speed rate.
+   - **Show ISP & Geolocation details:** Shows ISP name, city, and country.
+
+---
+
+## 💻 CLI Usage
+The backend helper script can also be executed in the terminal. It pretty-prints colored status information when run interactively, and returns structured JSON when piped or run with `--json`.
 
 ```bash
-# 1. Clone to your development folder (e.g., ~/github/)
-git clone https://github.com/KnowOneActual/org.fedora.networkwidget.git ~/github/org.fedora.networkwidget
-
-# 2. Create a symbolic link in the local Plasma widgets directory
-ln -s ~/github/org.fedora.networkwidget ~/.local/share/plasma/plasmoids/org.fedora.networkwidget
-
-# 3. Rebuild KDE cache and restart the shell
-kbuildsycoca6
-systemctl --user restart plasma-plasmashell
+python3 contents/ui/get_info.py [options]
 ```
 
-With this setup, any changes you make in your development folder will be live immediately. You just need to run `systemctl --user restart plasma-plasmashell` to reload the widget.
+### CLI Command Options:
+- `--json`: Force JSON output formatting.
+- `--hide-ipv6` / `--show-ipv6`: Control IPv6 visibility.
+- `--show-latency`: Include ping latency.
+- `--show-bandwidth`: Include real-time bandwidth speeds and usage stats.
+- `--show-mac`: Include MAC addresses and CIDR subnet prefixes.
+- `--show-extended-wifi`: Include detailed wireless configuration.
+- `--show-geo`: Fetch ISP and location metadata.
 
-### Packaging (Building `.plasmoid`)
-To package the widget into a distributable `.plasmoid` file, zip the project contents from the root directory:
+---
+
+## 📦 Packaging for Release
+To package the widget into a distributable `.plasmoid` archive, zip the project contents from the root directory:
 
 ```bash
-zip -r org.fedora.networkwidget.plasmoid metadata.json contents/
+zip -r org.fedora.networkwidget.plasmoid metadata.json contents/ preview.webp
 ```
-
-Once installed, right-click your desktop, select **Add Widgets...**, search for **"Network Info Widget"**, and drag it onto your desktop or panel!
-
-## CLI Usage
-
-The backend helper script can be executed directly in the terminal to inspect network details. It automatically pretty-prints colored text when run in a TTY, and outputs JSON when piped or run in scripts.
-
-```bash
-python3 contents/ui/get_info.py
-```
-
-### CLI Options
-
-- `--json`: Force raw JSON output format.
-- `--hide-ipv6`: Hide IPv6 details.
-- `--show-ipv6`: Force show IPv6 details (overrides desktop configuration).
-
-## Configuration
-
-To switch between the background card and floating text:
-1. Right-click the widget.
-2. Toggle the **"Show Card Background"** checkbox.
-3. The layout switches and saves your setting automatically.
 
 ## License
-
 GPL-3.0. Feel free to modify and share!

@@ -10,6 +10,5 @@ __pycache__/
 *~
 *.bak
 
-# Built artifacts
-*.plasmoid
+
 

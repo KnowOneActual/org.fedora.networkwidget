@@ -2,7 +2,8 @@
 
 A minimal, native network info widget for KDE Plasma 6 (tested on Fedora). It displays connection details directly on your desktop or panels, using system fonts and colors that match your active theme.
 
-![Widget preview](https://raw.githubusercontent.com/KnowOneActual/org.fedora.networkwidget/main/preview.webp)
+![Widget preview](/asset/img/preview_default.webp)
+![Widget preview full](/asset/img/preview_full_data.webp)
 
 ## Features
 

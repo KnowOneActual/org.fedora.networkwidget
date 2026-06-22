@@ -64,7 +64,6 @@ PlasmoidItem {
             checked: plasmoid.configuration.showIPv6
             onTriggered: {
                 plasmoid.configuration.showIPv6 = !plasmoid.configuration.showIPv6;
-                root.updateModel();
             }
         }
     ]
@@ -74,43 +73,36 @@ PlasmoidItem {
         id: clipboard
     }
 
-    // Dynamic model to hold rows that should be displayed
-    ListModel {
-        id: detailsModel
-    }
-
-    // Update details model dynamically based on active interfaces/addresses
-    function updateModel() {
-        detailsModel.clear();
+    // Dynamic reactive model list to hold rows that should be displayed
+    readonly property var detailsList: {
+        var list = [];
         
         // Interface name and SSID/Signal
         var interfaceVal = root.interfaceName;
         if (root.wifiSsid !== "None") {
             interfaceVal += " (" + root.wifiSsid + ", " + root.wifiSignal + "%)";
         }
-        detailsModel.append({ "label": "Interface", "value": interfaceVal, "rawValue": root.interfaceName });
+        list.push({ "label": "Interface", "value": interfaceVal, "rawValue": root.interfaceName });
         
         // Local IPs & Gateway
-        detailsModel.append({ "label": "Local IPv4", "value": root.localIp, "rawValue": root.localIp });
+        list.push({ "label": "Local IPv4", "value": root.localIp, "rawValue": root.localIp });
         if (root.gateway !== "None" && root.gateway !== "") {
-            detailsModel.append({ "label": "Gateway", "value": root.gateway, "rawValue": root.gateway });
+            list.push({ "label": "Default Gateway", "value": root.gateway, "rawValue": root.gateway });
         }
         if (plasmoid.configuration.showIPv6 && root.localIpv6 !== "None" && root.localIpv6 !== "") {
-            detailsModel.append({ "label": "Local IPv6", "value": root.localIpv6, "rawValue": root.localIpv6 });
+            list.push({ "label": "Local IPv6", "value": root.localIpv6, "rawValue": root.localIpv6 });
         }
         
         // Public IPs
-        detailsModel.append({ "label": "Public IPv4", "value": root.publicIp, "rawValue": root.publicIp });
+        list.push({ "label": "Public IPv4", "value": root.publicIp, "rawValue": root.publicIp });
         if (plasmoid.configuration.showIPv6 && root.publicIpv6 !== "Offline" && root.publicIpv6 !== "None" && root.publicIpv6 !== "") {
-            detailsModel.append({ "label": "Public IPv6", "value": root.publicIpv6, "rawValue": root.publicIpv6 });
+            list.push({ "label": "Public IPv6", "value": root.publicIpv6, "rawValue": root.publicIpv6 });
         }
         
         // DNS
-        detailsModel.append({ "label": "DNS Servers", "value": root.dnsInfo, "rawValue": root.dnsInfo });
-    }
-
-    Component.onCompleted: {
-        updateModel();
+        list.push({ "label": "DNS Servers", "value": root.dnsInfo, "rawValue": root.dnsInfo });
+        
+        return list;
     }
 
     // The data source to run the python helper script
@@ -140,9 +132,6 @@ PlasmoidItem {
                         root.dnsInfo = "None";
                     }
                     root.isOnline = (root.publicIp !== "Offline" && root.publicIp !== "None" && root.interfaceName !== "None");
-                    
-                    // Update the model dynamically
-                    root.updateModel();
                 } catch (e) {
                     console.log("JSON Parse error: " + e);
                 }
@@ -156,7 +145,11 @@ PlasmoidItem {
             if (scriptPath.indexOf("file://") === 0) {
                 scriptPath = scriptPath.substring(7);
             }
-            connectSource("python3 " + scriptPath);
+            var cmd = "python3 " + scriptPath + " --json";
+            if (!plasmoid.configuration.showIPv6) {
+                cmd += " --hide-ipv6";
+            }
+            connectSource(cmd);
         }
     }
 
@@ -181,7 +174,7 @@ PlasmoidItem {
     fullRepresentation: Item {
         id: panelItem
         implicitWidth: Kirigami.Units.gridUnit * 18
-        implicitHeight: Kirigami.Units.gridUnit * 15
+        implicitHeight: mainLayout.implicitHeight + Kirigami.Units.largeSpacing * 2
 
         ColumnLayout {
             id: mainLayout
@@ -279,7 +272,7 @@ PlasmoidItem {
                 spacing: Kirigami.Units.smallSpacing
 
                 Repeater {
-                    model: detailsModel
+                    model: root.detailsList
 
                     delegate: Item {
                         id: rowItem
@@ -307,11 +300,12 @@ PlasmoidItem {
                         // Content layout
                         RowLayout {
                             anchors.fill: parent
+                            anchors.rightMargin: 24 // Reserve space for copy icon to prevent shifting
                             spacing: Kirigami.Units.smallSpacing
 
                             // Label
                             PlasmaComponents.Label {
-                                text: model.label
+                                text: modelData.label
                                 color: root.mutedTextColor
                                 style: root.textStyle
                                 styleColor: root.outlineColor
@@ -327,9 +321,10 @@ PlasmoidItem {
 
                             // Value
                             PlasmaComponents.Label {
-                                text: rowItem.isCopied ? "Copied!" : model.value
-                                color: rowItem.isCopied ? root.accentColor : ((model.label.indexOf("Public") === 0 && model.value === "Offline") ? "#F56C6C" : root.textColor)
-                                font.bold: (model.label === "Interface")
+                                text: rowItem.isCopied ? "Copied!" : modelData.value
+                                color: rowItem.isCopied ? root.accentColor : ((modelData.label.indexOf("Public") === 0 && modelData.value === "Offline") ? "#F56C6C" : root.textColor)
+                                font.bold: (modelData.label === "Interface")
+                                font.family: (modelData.label.indexOf("IPv") >= 0 || modelData.label.indexOf("Gateway") >= 0 || modelData.label === "DNS Servers") ? "monospace" : ""
                                 style: root.textStyle
                                 styleColor: root.outlineColor
                                 font.pixelSize: Kirigami.Theme.defaultFont.pixelSize
@@ -339,18 +334,19 @@ PlasmoidItem {
                                 // Let the text expand up to 70% of the row width
                                 Layout.maximumWidth: parent.width * 0.7
                             }
+                        }
 
-                            // Copy icon
-                            Kirigami.Icon {
-                                source: "edit-copy-symbolic"
-                                implicitWidth: Kirigami.Units.iconSizes.small
-                                implicitHeight: Kirigami.Units.iconSizes.small
-                                color: rowItem.isCopied ? root.accentColor : root.mutedTextColor
-                                opacity: rowItem.isHovered || rowItem.isCopied ? 0.8 : 0.0
-                                Behavior on opacity { NumberAnimation { duration: 150 } }
-                                Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                                Layout.rightMargin: 6
-                            }
+                        // Copy icon (absolutely positioned on the right)
+                        Kirigami.Icon {
+                            source: "edit-copy-symbolic"
+                            implicitWidth: Kirigami.Units.iconSizes.small
+                            implicitHeight: Kirigami.Units.iconSizes.small
+                            color: rowItem.isCopied ? root.accentColor : root.mutedTextColor
+                            opacity: rowItem.isHovered || rowItem.isCopied ? 0.8 : 0.0
+                            Behavior on opacity { NumberAnimation { duration: 150 } }
+                            anchors.right: parent.right
+                            anchors.rightMargin: 6
+                            anchors.verticalCenter: parent.verticalCenter
                         }
 
                         // Copy MouseArea
@@ -361,7 +357,7 @@ PlasmoidItem {
                             onEntered: rowItem.isHovered = true
                             onExited: rowItem.isHovered = false
                             onClicked: {
-                                clipboard.content = model.rawValue;
+                                clipboard.content = modelData.rawValue;
                                 rowItem.isCopied = true;
                                 copiedTimer.restart();
                             }

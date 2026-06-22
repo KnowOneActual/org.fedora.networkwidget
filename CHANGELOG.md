@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2] - 2026-06-21
+
+### Added
+- **Default Gateway:** Added default gateway to the standard network info in both widget UI and terminal.
+- **Monospace Typography:** Local IPs, Public IPs, Default Gateway, and DNS servers are now rendered in a clean system monospace font for optimal visual alignment and readability.
+- **Beautiful Terminal CLI Output:** Running `get_info.py` directly in a terminal now prints a beautifully formatted, colored summary table of network info instead of raw JSON.
+- **CLI Options:** Added `--json`, `--hide-ipv6`, and `--show-ipv6` to `get_info.py` to allow manual execution overriding.
+
+### Changed
+- **Reactive Model Binding:** Converted the widget to use a reactive `detailsList` JavaScript array property instead of an imperative QML `ListModel`, resolving synchronization/update lag completely.
+- **Layout Sizing & Alignment:** The widget now dynamically recalculates its height based on the number of active rows (with/without IPv6), eliminating layout sizing bugs.
+- **Stable Alignment:** Positioned the row copy icons absolutely on the right to prevent values from shifting horizontally when hovered.
+
+### Optimized
+- **IPv6 Network Optimization:** The python script now completely skips DNS and HTTP API queries for local/public IPv6 if IPv6 visibility is toggled off, avoiding network lookup delays.
+
 ## [1.1] - 2026-06-21
 
 ### Added

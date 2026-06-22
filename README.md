@@ -6,15 +6,16 @@ A minimal, native network info widget for KDE Plasma 6 (tested on Fedora). It di
 
 ## Features
 
-- 🌐 **Interface detection:** Automatically displays the active interface name (WiFi, Ethernet, or VPN) and shows matching icons.
-- 🏠 **Local IP address:** Displays your machine's current local network address.
-- 🌍 **Public IP address:** Queries your external IP using multi-source fallbacks. Displays `Offline` if you're offline.
-- 📋 **DNS servers:** Resolves active DNS server addresses from `systemd-resolved` or `NetworkManager` (`nmcli`).
-- 🎨 **Minimal layout:**
-  - Respects your light or dark theme and system typography.
-  - **Floating text mode:** Right-click the widget and toggle off "Show Card Background" to remove borders, margins, and boxes. The text floats directly on your wallpaper.
-  - Adds outlines to text in floating mode to keep it readable against any wallpaper.
-- ⚡ **Auto and manual refresh:** Runs on a 60-second timer or updates when you click the widget.
+- 🌐 **Interface Detection:** Automatically displays the active interface name (WiFi, Ethernet, or VPN) with matching system icons.
+- 🏠 **Dual-Stack IP Info:** Displays local and public IPv4 and IPv6 addresses.
+- 🔑 **Default Gateway:** Shows the default network gateway in standard info.
+- 📋 **DNS Servers:** Resolves active DNS addresses from `systemd-resolved` or `NetworkManager` (`nmcli`).
+- 📶 **WiFi Tracking:** Displays wireless SSID and signal strength percentage in real-time.
+- ✂️ **Click-to-Copy:** Click any detail row to copy its raw value to the system clipboard (with hover highlighting and visual feedback).
+- ⚙️ **Context Customization:** Right-click the widget to toggle:
+  - **Show Card Background:** Toggle background container/borders off to let text float on your wallpaper (includes text outlines for readability).
+  - **Show IPv6 Addresses:** Toggle IPv6 visibility. Automatically adapts layout height.
+- ⚡ **Auto & Manual Refresh:** Updates on a 60-second timer or immediately when clicking the refresh icon.
 
 ## Requirements
 
@@ -72,6 +73,20 @@ zip -r org.fedora.networkwidget.plasmoid metadata.json contents/
 ```
 
 Once installed, right-click your desktop, select **Add Widgets...**, search for **"Network Info Widget"**, and drag it onto your desktop or panel!
+
+## CLI Usage
+
+The backend helper script can be executed directly in the terminal to inspect network details. It automatically pretty-prints colored text when run in a TTY, and outputs JSON when piped or run in scripts.
+
+```bash
+python3 contents/ui/get_info.py
+```
+
+### CLI Options
+
+- `--json`: Force raw JSON output format.
+- `--hide-ipv6`: Hide IPv6 details.
+- `--show-ipv6`: Force show IPv6 details (overrides desktop configuration).
 
 ## Configuration
 

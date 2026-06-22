@@ -5,15 +5,20 @@ import org.kde.plasma.plasmoid
 import org.kde.kirigami as Kirigami
 import org.kde.plasma.components as PlasmaComponents
 import org.kde.plasma.plasma5support as Plasma5Support
+import org.kde.kquickcontrolsaddons as KQuickControlsAddons
 
 PlasmoidItem {
     id: root
 
     // Properties to store network data
-    property string interfaceName: "wlp2s0"
+    property string interfaceName: "None"
     property string localIp: "..."
+    property string localIpv6: "..."
     property string publicIp: "..."
+    property string publicIpv6: "..."
     property string dnsInfo: "..."
+    property string wifiSsid: "None"
+    property string wifiSignal: "None"
     property bool isRefreshing: false
     property bool isOnline: false
 
@@ -49,6 +54,47 @@ PlasmoidItem {
         }
     ]
 
+    // Clipboard helper
+    KQuickControlsAddons.Clipboard {
+        id: clipboard
+    }
+
+    // Dynamic model to hold rows that should be displayed
+    ListModel {
+        id: detailsModel
+    }
+
+    // Update details model dynamically based on active interfaces/addresses
+    function updateModel() {
+        detailsModel.clear();
+        
+        // Interface name and SSID/Signal
+        var interfaceVal = root.interfaceName;
+        if (root.wifiSsid !== "None") {
+            interfaceVal += " (" + root.wifiSsid + ", " + root.wifiSignal + "%)";
+        }
+        detailsModel.append({ "label": "Interface", "value": interfaceVal, "rawValue": root.interfaceName });
+        
+        // Local IPs
+        detailsModel.append({ "label": "Local IPv4", "value": root.localIp, "rawValue": root.localIp });
+        if (root.localIpv6 !== "None" && root.localIpv6 !== "") {
+            detailsModel.append({ "label": "Local IPv6", "value": root.localIpv6, "rawValue": root.localIpv6 });
+        }
+        
+        // Public IPs
+        detailsModel.append({ "label": "Public IPv4", "value": root.publicIp, "rawValue": root.publicIp });
+        if (root.publicIpv6 !== "Offline" && root.publicIpv6 !== "None" && root.publicIpv6 !== "") {
+            detailsModel.append({ "label": "Public IPv6", "value": root.publicIpv6, "rawValue": root.publicIpv6 });
+        }
+        
+        // DNS
+        detailsModel.append({ "label": "DNS Servers", "value": root.dnsInfo, "rawValue": root.dnsInfo });
+    }
+
+    Component.onCompleted: {
+        updateModel();
+    }
+
     // The data source to run the python helper script
     Plasma5Support.DataSource {
         id: executable
@@ -63,13 +109,21 @@ PlasmoidItem {
                     var parsed = JSON.parse(stdout.trim());
                     root.interfaceName = parsed.interface || "None";
                     root.localIp = parsed.local_ip || "None";
+                    root.localIpv6 = parsed.local_ipv6 || "None";
                     root.publicIp = parsed.public_ip || "Offline";
+                    root.publicIpv6 = parsed.public_ipv6 || "Offline";
+                    root.wifiSsid = parsed.wifi_ssid || "None";
+                    root.wifiSignal = parsed.wifi_signal || "None";
+                    
                     if (parsed.dns && parsed.dns.length > 0) {
                         root.dnsInfo = parsed.dns.join(", ");
                     } else {
                         root.dnsInfo = "None";
                     }
                     root.isOnline = (root.publicIp !== "Offline" && root.publicIp !== "None" && root.interfaceName !== "None");
+                    
+                    // Update the model dynamically
+                    root.updateModel();
                 } catch (e) {
                     console.log("JSON Parse error: " + e);
                 }
@@ -107,10 +161,11 @@ PlasmoidItem {
     // QML representation
     fullRepresentation: Item {
         id: panelItem
-        implicitWidth: Kirigami.Units.gridUnit * 15
-        implicitHeight: Kirigami.Units.gridUnit * 7.5
+        implicitWidth: Kirigami.Units.gridUnit * 16
+        implicitHeight: mainLayout.implicitHeight + Kirigami.Units.largeSpacing * 2
 
         ColumnLayout {
+            id: mainLayout
             anchors.fill: parent
             anchors.margins: Kirigami.Units.largeSpacing
             spacing: Kirigami.Units.smallSpacing
@@ -156,10 +211,39 @@ PlasmoidItem {
                     Behavior on color {
                         ColorAnimation { duration: 200 }
                     }
+                    Layout.rightMargin: 4
+                }
+
+                // Dedicated Refresh Icon with spin animation
+                Kirigami.Icon {
+                    id: refreshIcon
+                    source: "view-refresh"
+                    implicitWidth: Kirigami.Units.iconSizes.small
+                    implicitHeight: Kirigami.Units.iconSizes.small
+                    color: root.textColor
+                    opacity: refreshMouseArea.containsMouse ? 1.0 : 0.6
+                    
+                    Behavior on opacity { NumberAnimation { duration: 150 } }
+
+                    RotationAnimation on rotation {
+                        loops: Animation.Infinite
+                        from: 0
+                        to: 360
+                        duration: 1000
+                        running: root.isRefreshing
+                    }
+
+                    MouseArea {
+                        id: refreshMouseArea
+                        anchors.fill: parent
+                        hoverEnabled: true
+                        cursorShape: Qt.PointingHandCursor
+                        onClicked: root.refresh()
+                    }
                 }
             }
 
-            // Muted divider line (fades out in floating mode)
+            // Muted divider line
             Rectangle {
                 Layout.fillWidth: true
                 height: 1
@@ -169,104 +253,104 @@ PlasmoidItem {
                 Layout.bottomMargin: Kirigami.Units.smallSpacing
             }
 
-            // Grid of network details
-            GridLayout {
+            // Column of network details
+            ColumnLayout {
                 Layout.fillWidth: true
                 Layout.fillHeight: true
-                columns: 2
-                rowSpacing: Kirigami.Units.smallSpacing
-                columnSpacing: Kirigami.Units.largeSpacing
+                spacing: Kirigami.Units.smallSpacing
 
-                // Row 1: Interface
-                PlasmaComponents.Label {
-                    text: "Interface"
-                    color: root.mutedTextColor
-                    style: root.textStyle
-                    styleColor: root.outlineColor
-                    font.pixelSize: Kirigami.Theme.defaultFont.pixelSize
-                    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
-                }
-                PlasmaComponents.Label {
-                    text: root.interfaceName
-                    color: root.textColor
-                    font.bold: true
-                    style: root.textStyle
-                    styleColor: root.outlineColor
-                    font.pixelSize: Kirigami.Theme.defaultFont.pixelSize
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                    horizontalAlignment: Text.AlignRight
-                }
+                Repeater {
+                    model: detailsModel
 
-                // Row 2: Local IP
-                PlasmaComponents.Label {
-                    text: "Local IP"
-                    color: root.mutedTextColor
-                    style: root.textStyle
-                    styleColor: root.outlineColor
-                    font.pixelSize: Kirigami.Theme.defaultFont.pixelSize
-                    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
-                }
-                PlasmaComponents.Label {
-                    text: root.localIp
-                    color: root.textColor
-                    style: root.textStyle
-                    styleColor: root.outlineColor
-                    font.pixelSize: Kirigami.Theme.defaultFont.pixelSize
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                    horizontalAlignment: Text.AlignRight
-                }
+                    delegate: Item {
+                        id: rowItem
+                        Layout.fillWidth: true
+                        implicitHeight: Kirigami.Units.gridUnit * 1.5
 
-                // Row 3: Public IP
-                PlasmaComponents.Label {
-                    text: "Public IP"
-                    color: root.mutedTextColor
-                    style: root.textStyle
-                    styleColor: root.outlineColor
-                    font.pixelSize: Kirigami.Theme.defaultFont.pixelSize
-                    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
-                }
-                PlasmaComponents.Label {
-                    text: root.publicIp
-                    color: root.isOnline ? root.textColor : "#F56C6C"
-                    style: root.textStyle
-                    styleColor: root.outlineColor
-                    font.pixelSize: Kirigami.Theme.defaultFont.pixelSize
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                    horizontalAlignment: Text.AlignRight
-                }
+                        property bool isHovered: false
+                        property bool isCopied: false
 
-                // Row 4: DNS
-                PlasmaComponents.Label {
-                    text: "DNS Servers"
-                    color: root.mutedTextColor
-                    style: root.textStyle
-                    styleColor: root.outlineColor
-                    font.pixelSize: Kirigami.Theme.defaultFont.pixelSize
-                    Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
-                }
-                PlasmaComponents.Label {
-                    text: root.dnsInfo
-                    color: root.textColor
-                    style: root.textStyle
-                    styleColor: root.outlineColor
-                    font.pixelSize: Kirigami.Theme.defaultFont.pixelSize
-                    Layout.fillWidth: true
-                    Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
-                    horizontalAlignment: Text.AlignRight
-                    elide: Text.ElideLeft
+                        Timer {
+                            id: copiedTimer
+                            interval: 1500
+                            onTriggered: rowItem.isCopied = false
+                        }
+
+                        // Background highlight on hover
+                        Rectangle {
+                            anchors.fill: parent
+                            color: root.textColor
+                            opacity: rowItem.isCopied ? 0.12 : (rowItem.isHovered ? 0.06 : 0.0)
+                            radius: 4
+                            Behavior on opacity { NumberAnimation { duration: 150 } }
+                        }
+
+                        // Content layout
+                        RowLayout {
+                            anchors.fill: parent
+                            spacing: Kirigami.Units.smallSpacing
+
+                            // Label
+                            PlasmaComponents.Label {
+                                text: model.label
+                                color: root.mutedTextColor
+                                style: root.textStyle
+                                styleColor: root.outlineColor
+                                font.pixelSize: Kirigami.Theme.defaultFont.pixelSize
+                                Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+                                Layout.leftMargin: 6
+                            }
+
+                            // Spacer
+                            Item {
+                                Layout.fillWidth: true
+                            }
+
+                            // Value and copy icon
+                            RowLayout {
+                                spacing: 6
+                                Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                                Layout.rightMargin: 6
+
+                                PlasmaComponents.Label {
+                                    text: rowItem.isCopied ? "Copied!" : model.value
+                                    color: rowItem.isCopied ? root.accentColor : ((model.label.indexOf("Public") === 0 && model.value === "Offline") ? "#F56C6C" : root.textColor)
+                                    font.bold: (model.label === "Interface")
+                                    style: root.textStyle
+                                    styleColor: root.outlineColor
+                                    font.pixelSize: Kirigami.Theme.defaultFont.pixelSize
+                                    horizontalAlignment: Text.AlignRight
+                                    elide: Text.ElideLeft
+                                    Layout.maximumWidth: Kirigami.Units.gridUnit * 10
+                                }
+
+                                Kirigami.Icon {
+                                    source: "edit-copy-symbolic"
+                                    implicitWidth: Kirigami.Units.iconSizes.small
+                                    implicitHeight: Kirigami.Units.iconSizes.small
+                                    color: rowItem.isCopied ? root.accentColor : root.mutedTextColor
+                                    opacity: rowItem.isHovered || rowItem.isCopied ? 0.8 : 0.0
+                                    Behavior on opacity { NumberAnimation { duration: 150 } }
+                                }
+                            }
+                        }
+
+                        // Copy MouseArea
+                        MouseArea {
+                            anchors.fill: parent
+                            hoverEnabled: true
+                            cursorShape: Qt.PointingHandCursor
+                            onEntered: rowItem.isHovered = true
+                            onExited: rowItem.isHovered = false
+                            onClicked: {
+                                clipboard.content = model.rawValue;
+                                rowItem.isCopied = true;
+                                copiedTimer.restart();
+                            }
+                        }
+                    }
                 }
             }
-        }
-
-        // Entire widget can be clicked to refresh
-        MouseArea {
-            anchors.fill: parent
-            onClicked: root.refresh()
-            hoverEnabled: true
-            cursorShape: Qt.PointingHandCursor
         }
     }
 }

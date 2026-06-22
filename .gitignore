@@ -9,3 +9,7 @@ __pycache__/
 # Temp/Backup files
 *~
 *.bak
+
+# Built artifacts
+*.plasmoid
+

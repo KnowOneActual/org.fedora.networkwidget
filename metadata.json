@@ -4,7 +4,7 @@
         "Description": "Displays active interface, local IP, public IP, and DNS server addresses in a minimal layout.",
         "Icon": "network-wired",
         "Id": "org.fedora.networkwidget",
-        "Version": "1.0",
+        "Version": "1.1",
         "Category": "Network",
         "License": "GPL",
         "Authors": [

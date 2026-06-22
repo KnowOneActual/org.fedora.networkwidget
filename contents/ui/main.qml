@@ -11,13 +11,14 @@ PlasmoidItem {
     id: root
 
     // Stable sizing for the Plasma container
-    implicitWidth: Kirigami.Units.gridUnit * 16
-    implicitHeight: Kirigami.Units.gridUnit * 11.5
+    implicitWidth: Kirigami.Units.gridUnit * 18
+    implicitHeight: Kirigami.Units.gridUnit * 15
 
     // Properties to store network data
     property string interfaceName: "None"
     property string localIp: "..."
     property string localIpv6: "..."
+    property string gateway: "..."
     property string publicIp: "..."
     property string publicIpv6: "..."
     property string dnsInfo: "..."
@@ -55,6 +56,16 @@ PlasmoidItem {
             onTriggered: {
                 plasmoid.configuration.showBackground = !plasmoid.configuration.showBackground;
             }
+        },
+        PlasmaCore.Action {
+            text: "Show IPv6 Addresses"
+            icon.name: "network-wired"
+            checkable: true
+            checked: plasmoid.configuration.showIPv6
+            onTriggered: {
+                plasmoid.configuration.showIPv6 = !plasmoid.configuration.showIPv6;
+                root.updateModel();
+            }
         }
     ]
 
@@ -79,15 +90,18 @@ PlasmoidItem {
         }
         detailsModel.append({ "label": "Interface", "value": interfaceVal, "rawValue": root.interfaceName });
         
-        // Local IPs
+        // Local IPs & Gateway
         detailsModel.append({ "label": "Local IPv4", "value": root.localIp, "rawValue": root.localIp });
-        if (root.localIpv6 !== "None" && root.localIpv6 !== "") {
+        if (root.gateway !== "None" && root.gateway !== "") {
+            detailsModel.append({ "label": "Gateway", "value": root.gateway, "rawValue": root.gateway });
+        }
+        if (plasmoid.configuration.showIPv6 && root.localIpv6 !== "None" && root.localIpv6 !== "") {
             detailsModel.append({ "label": "Local IPv6", "value": root.localIpv6, "rawValue": root.localIpv6 });
         }
         
         // Public IPs
         detailsModel.append({ "label": "Public IPv4", "value": root.publicIp, "rawValue": root.publicIp });
-        if (root.publicIpv6 !== "Offline" && root.publicIpv6 !== "None" && root.publicIpv6 !== "") {
+        if (plasmoid.configuration.showIPv6 && root.publicIpv6 !== "Offline" && root.publicIpv6 !== "None" && root.publicIpv6 !== "") {
             detailsModel.append({ "label": "Public IPv6", "value": root.publicIpv6, "rawValue": root.publicIpv6 });
         }
         
@@ -114,6 +128,7 @@ PlasmoidItem {
                     root.interfaceName = parsed.interface || "None";
                     root.localIp = parsed.local_ip || "None";
                     root.localIpv6 = parsed.local_ipv6 || "None";
+                    root.gateway = parsed.gateway || "None";
                     root.publicIp = parsed.public_ip || "Offline";
                     root.publicIpv6 = parsed.public_ipv6 || "Offline";
                     root.wifiSsid = parsed.wifi_ssid || "None";
@@ -165,8 +180,8 @@ PlasmoidItem {
     // QML representation
     fullRepresentation: Item {
         id: panelItem
-        implicitWidth: Kirigami.Units.gridUnit * 16
-        implicitHeight: Kirigami.Units.gridUnit * 11.5
+        implicitWidth: Kirigami.Units.gridUnit * 18
+        implicitHeight: Kirigami.Units.gridUnit * 15
 
         ColumnLayout {
             id: mainLayout
@@ -310,32 +325,31 @@ PlasmoidItem {
                                 Layout.fillWidth: true
                             }
 
-                            // Value and copy icon
-                            RowLayout {
-                                spacing: 6
+                            // Value
+                            PlasmaComponents.Label {
+                                text: rowItem.isCopied ? "Copied!" : model.value
+                                color: rowItem.isCopied ? root.accentColor : ((model.label.indexOf("Public") === 0 && model.value === "Offline") ? "#F56C6C" : root.textColor)
+                                font.bold: (model.label === "Interface")
+                                style: root.textStyle
+                                styleColor: root.outlineColor
+                                font.pixelSize: Kirigami.Theme.defaultFont.pixelSize
+                                Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+                                horizontalAlignment: Text.AlignRight
+                                elide: Text.ElideLeft
+                                // Let the text expand up to 70% of the row width
+                                Layout.maximumWidth: parent.width * 0.7
+                            }
+
+                            // Copy icon
+                            Kirigami.Icon {
+                                source: "edit-copy-symbolic"
+                                implicitWidth: Kirigami.Units.iconSizes.small
+                                implicitHeight: Kirigami.Units.iconSizes.small
+                                color: rowItem.isCopied ? root.accentColor : root.mutedTextColor
+                                opacity: rowItem.isHovered || rowItem.isCopied ? 0.8 : 0.0
+                                Behavior on opacity { NumberAnimation { duration: 150 } }
                                 Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
                                 Layout.rightMargin: 6
-
-                                PlasmaComponents.Label {
-                                    text: rowItem.isCopied ? "Copied!" : model.value
-                                    color: rowItem.isCopied ? root.accentColor : ((model.label.indexOf("Public") === 0 && model.value === "Offline") ? "#F56C6C" : root.textColor)
-                                    font.bold: (model.label === "Interface")
-                                    style: root.textStyle
-                                    styleColor: root.outlineColor
-                                    font.pixelSize: Kirigami.Theme.defaultFont.pixelSize
-                                    horizontalAlignment: Text.AlignRight
-                                    elide: Text.ElideLeft
-                                    Layout.maximumWidth: Kirigami.Units.gridUnit * 10
-                                }
-
-                                Kirigami.Icon {
-                                    source: "edit-copy-symbolic"
-                                    implicitWidth: Kirigami.Units.iconSizes.small
-                                    implicitHeight: Kirigami.Units.iconSizes.small
-                                    color: rowItem.isCopied ? root.accentColor : root.mutedTextColor
-                                    opacity: rowItem.isHovered || rowItem.isCopied ? 0.8 : 0.0
-                                    Behavior on opacity { NumberAnimation { duration: 150 } }
-                                }
                             }
                         }
 

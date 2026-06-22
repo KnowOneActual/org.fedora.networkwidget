@@ -15,7 +15,19 @@ def get_default_interface():
             return match.group(1)
     except Exception:
         pass
+def get_default_gateway():
+    try:
+        res = subprocess.run(["ip", "route", "show", "default"], capture_output=True, text=True, errors="replace", check=True)
+        lines = res.stdout.strip().split('\n')
+        if not lines or not lines[0]:
+            return None
+        match = re.search(r'via\s+(\S+)', lines[0])
+        if match:
+            return match.group(1)
+    except Exception:
+        pass
     return None
+
 
 def get_local_ip(interface):
     if not interface:
@@ -117,6 +129,7 @@ def main():
     iface = get_default_interface()
     local_ip = get_local_ip(iface)
     local_ipv6 = get_local_ipv6(iface)
+    gateway = get_default_gateway()
     dns = get_dns_servers(iface)
     public_ip = get_public_ip(ipv6=False)
     public_ipv6 = get_public_ip(ipv6=True)
@@ -126,6 +139,7 @@ def main():
         "interface": iface or "None",
         "local_ip": local_ip or "None",
         "local_ipv6": local_ipv6 or "None",
+        "gateway": gateway or "None",
         "public_ip": public_ip,
         "public_ipv6": public_ipv6,
         "dns": dns,

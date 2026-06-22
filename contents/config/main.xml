@@ -5,5 +5,8 @@
 		<entry name="showBackground" type="bool">
 			<default>true</default>
 		</entry>
+		<entry name="showIPv6" type="bool">
+			<default>true</default>
+		</entry>
 	</group>
 </kcfg>

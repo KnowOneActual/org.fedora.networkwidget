@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.2.1] - 2026-06-21
+
+### Fixed
+- **IPv6 Visibility Toggle:** Fixed a bug where toggling "Show IPv6 Addresses" had no effect because the widget did not trigger a refresh of the network script when the configuration changed.
+- **CLI Configuration Override:** Modified the script runner in QML to explicitly pass `--show-ipv6` to `get_info.py` when enabled, bypassing stale or cached on-disk configurations.
+
 ## [1.2] - 2026-06-21
 
 ### Added

@@ -27,6 +27,10 @@ PlasmoidItem {
     property bool isRefreshing: false
     property bool isOnline: false
 
+    // Configuration change listeners
+    readonly property bool showIPv6: plasmoid.configuration.showIPv6
+    onShowIPv6Changed: root.refresh()
+
     // System theme colors
     readonly property color textColor: Kirigami.Theme.textColor
     readonly property color mutedTextColor: Kirigami.Theme.disabledTextColor
@@ -148,6 +152,8 @@ PlasmoidItem {
             var cmd = "python3 " + scriptPath + " --json";
             if (!plasmoid.configuration.showIPv6) {
                 cmd += " --hide-ipv6";
+            } else {
+                cmd += " --show-ipv6";
             }
             connectSource(cmd);
         }

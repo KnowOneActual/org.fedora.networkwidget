@@ -11,6 +11,12 @@ All notable changes to this project will be documented in this file.
 ### Removed
 - **VLAN Info:** Removed native virtual VLAN detection settings and displays in favor of LLDP switch details.
 
+### Security
+- **Secure Cache Storage:** Moved local state caching from the public `/tmp` directory to the user's private `~/.cache` directory with strict `0o700` directory access permissions to prevent symlink race vulnerabilities.
+- **Audited External Connections:** Statically audited all external HTTP/HTTPS connections and added linter exclusions for validated IP and geolocation lookup endpoints.
+- **Linter Integration:** Integrated Bandit security analysis checks directly into repository workflows to enforce continuous security auditing.
+
+
 ## [1.3.0] - 2026-06-22
 
 ### Added

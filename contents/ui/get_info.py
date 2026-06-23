@@ -110,7 +110,7 @@ def get_public_ip(ipv6=False):
     for url in urls:
         try:
             req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-            with urllib.request.urlopen(req, timeout=2.0) as response:
+            with urllib.request.urlopen(req, timeout=2.0) as response:  # nosec B310
                 ip = response.read().decode('utf-8', errors="replace").strip()
                 if ipv6:
                     if ":" in ip and not ip.endswith(":") and not ip.startswith(":"):
@@ -290,7 +290,12 @@ def get_bandwidth_details(interface):
     total_rx_str = format_bytes(rx_bytes)
     total_tx_str = format_bytes(tx_bytes)
     
-    cache_path = "/tmp/org.fedora.networkwidget.state.json"
+    cache_dir = os.path.expanduser("~/.cache")
+    try:
+        os.makedirs(cache_dir, mode=0o700, exist_ok=True)
+    except Exception:
+        pass
+    cache_path = os.path.join(cache_dir, "org.fedora.networkwidget.state.json")
     rx_speed = 0.0
     tx_speed = 0.0
     
@@ -390,7 +395,7 @@ def get_geo_details():
     try:
         url = "http://ip-api.com/json/?fields=status,country,city,isp"
         req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
-        with urllib.request.urlopen(req, timeout=1.5) as response:
+        with urllib.request.urlopen(req, timeout=1.5) as response:  # nosec B310
             data = json.loads(response.read().decode('utf-8', errors="replace"))
             if data.get("status") == "success":
                 return {

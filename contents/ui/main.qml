@@ -26,9 +26,10 @@ PlasmoidItem {
     property string wifiSignal: "None"
     property bool isRefreshing: false
     property bool isOnline: false
-    property bool vlanActive: false
-    property string vlanId: "None"
-    property string vlanParent: "None"
+    property bool lldpActive: false
+    property string switchName: "None"
+    property string switchPort: "None"
+    property string switchMac: "None"
     property bool vpnActive: false
     property string vpnName: "None"
     property string vpnType: "None"
@@ -49,8 +50,8 @@ PlasmoidItem {
     // Configuration change listeners
     readonly property bool showIPv6: plasmoid.configuration.showIPv6
     onShowIPv6Changed: root.refresh()
-    readonly property bool showVlan: plasmoid.configuration.showVlan
-    onShowVlanChanged: root.refresh()
+    readonly property bool showLldp: plasmoid.configuration.showLldp
+    onShowLldpChanged: root.refresh()
     readonly property bool showVpn: plasmoid.configuration.showVpn
     onShowVpnChanged: root.refresh()
     readonly property bool showLatency: plasmoid.configuration.showLatency
@@ -121,10 +122,11 @@ PlasmoidItem {
         }
         list.push({ "label": "Interface", "value": interfaceVal, "rawValue": root.interfaceName });
         
-        // VLAN ID & Parent (if showVlan is enabled and vlan is active)
-        if (plasmoid.configuration.showVlan && root.vlanActive) {
-            var vlanVal = root.vlanId + " (Parent: " + root.vlanParent + ")";
-            list.push({ "label": "VLAN ID", "value": vlanVal, "rawValue": root.vlanId });
+        // Switch / LLDP details (if showLldp is enabled and lldp is active)
+        if (plasmoid.configuration.showLldp && root.lldpActive) {
+            var switchVal = root.switchPort + " (on " + root.switchName + ")";
+            list.push({ "label": "Switch Port", "value": switchVal, "rawValue": root.switchPort });
+            list.push({ "label": "Switch MAC", "value": root.switchMac, "rawValue": root.switchMac });
         }
         
         // Wi-Fi details (if showExtendedWifi is enabled and Wi-Fi SSID is active)
@@ -206,9 +208,10 @@ PlasmoidItem {
                     root.wifiSsid = parsed.wifi_ssid || "None";
                     root.wifiSignal = parsed.wifi_signal || "None";
                     
-                    root.vlanActive = parsed.vlan_active || false;
-                    root.vlanId = parsed.vlan_id || "None";
-                    root.vlanParent = parsed.vlan_parent || "None";
+                    root.lldpActive = parsed.lldp_active || false;
+                    root.switchName = parsed.switch_name || "None";
+                    root.switchPort = parsed.switch_port || "None";
+                    root.switchMac = parsed.switch_mac || "None";
                     
                     root.vpnActive = parsed.vpn_active || false;
                     root.vpnName = parsed.vpn_name || "None";

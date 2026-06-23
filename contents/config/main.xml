@@ -8,7 +8,7 @@
 		<entry name="showIPv6" type="bool">
 			<default>true</default>
 		</entry>
-		<entry name="showVlan" type="bool">
+		<entry name="showLldp" type="bool">
 			<default>false</default>
 		</entry>
 		<entry name="showVpn" type="bool">

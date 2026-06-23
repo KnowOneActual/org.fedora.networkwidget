@@ -136,52 +136,49 @@ def get_wifi_details(interface):
         pass
     return None, None
 
-def get_vlan_details(interface):
+def get_lldp_details(interface):
     if not interface or interface == "None":
         return None
-    uevent_path = f"/sys/class/net/{interface}/uevent"
-    if not os.path.exists(uevent_path):
-        return None
     try:
-        is_vlan = False
-        with open(uevent_path, "r", encoding="utf-8", errors="replace") as f:
-            for line in f:
-                if "DEVTYPE=vlan" in line:
-                    is_vlan = True
-                    break
-        if not is_vlan:
-            return None
+        res = subprocess.run(["nmcli", "-t", "device", "lldp", "list", "ifname", interface], capture_output=True, text=True, errors="replace", check=True)
         
-        # Get parent interface
-        parent = None
-        net_dir = f"/sys/class/net/{interface}"
-        if os.path.exists(net_dir):
-            for entry in os.listdir(net_dir):
-                if entry.startswith("lower_"):
-                    parent = entry[6:] # extract parent interface name
-                    break
-
-        # Get VLAN ID
-        vlan_id = None
-        try:
-            res = subprocess.run(["ip", "-d", "link", "show", interface], capture_output=True, text=True, errors="replace", check=True)
-            match = re.search(r'vlan\s+id\s+(\d+)', res.stdout)
-            if match:
-                vlan_id = match.group(1)
-            else:
-                match = re.search(r'id\s+(\d+)', res.stdout)
-                if match:
-                    vlan_id = match.group(1)
-        except Exception:
-            pass
-
-        return {
-            "vlan_id": vlan_id or "Unknown",
-            "parent": parent or "Unknown"
-        }
+        system_name = None
+        port_desc = None
+        port_id = None
+        chassis_id = None
+        
+        for line in res.stdout.splitlines():
+            line = line.strip()
+            parts = line.split(":", 1)
+            if len(parts) != 2:
+                continue
+            key, val = parts[0], parts[1]
+            if "SYSTEM-NAME" in key:
+                system_name = val
+            elif "PORT-DESCRIPTION" in key:
+                port_desc = val
+            elif "PORT-ID" in key:
+                port_id = val
+            elif "CHASSIS-ID" in key:
+                chassis_id = val
+                
+        port = port_desc or port_id
+        
+        if system_name or port or chassis_id:
+            return {
+                "lldp_active": True,
+                "switch_name": system_name or "Unknown",
+                "switch_port": port or "Unknown",
+                "switch_mac": chassis_id or "Unknown"
+            }
     except Exception:
         pass
-    return None
+    return {
+        "lldp_active": False,
+        "switch_name": "None",
+        "switch_port": "None",
+        "switch_mac": "None"
+    }
 
 def get_vpn_details():
     try:
@@ -459,7 +456,7 @@ def main():
     gateway = get_default_gateway()
     dns = get_dns_servers(iface)
     ssid, signal = get_wifi_details(iface)
-    vlan_details = get_vlan_details(iface)
+    lldp_details = get_lldp_details(iface)
     vpn_details = get_vpn_details()
     
     # Determine IPv6 visibility
@@ -503,9 +500,10 @@ def main():
         "dns": dns,
         "wifi_ssid": ssid or "None",
         "wifi_signal": signal or "None",
-        "vlan_active": vlan_details is not None,
-        "vlan_id": vlan_details["vlan_id"] if vlan_details else "None",
-        "vlan_parent": vlan_details["parent"] if vlan_details else "None",
+        "lldp_active": lldp_details["lldp_active"] if lldp_details else False,
+        "switch_name": lldp_details["switch_name"] if lldp_details else "None",
+        "switch_port": lldp_details["switch_port"] if lldp_details else "None",
+        "switch_mac": lldp_details["switch_mac"] if lldp_details else "None",
         "vpn_active": vpn_details["vpn_active"],
         "vpn_name": vpn_details["vpn_name"],
         "vpn_type": vpn_details["vpn_type"],
@@ -545,8 +543,9 @@ def main():
             iface_str += f" (SSID: {data['wifi_ssid']}, Signal: {data['wifi_signal']}%)"
         print(f"{BOLD}Interface:{RESET}       {iface_str}")
         
-        if data["vlan_active"]:
-            print(f"{BOLD}VLAN ID:{RESET}         {data['vlan_id']} (Parent: {data['vlan_parent']})")
+        if data["lldp_active"]:
+            print(f"{BOLD}Switch Port:{RESET}     {data['switch_port']} (on {data['switch_name']})")
+            print(f"{BOLD}Switch MAC:{RESET}      {data['switch_mac']}")
             
         if args.show_extended_wifi and data["wifi_ssid"] != "None" and data["wifi_band"] != "None":
             print(f"{BOLD}Wi-Fi Details:{RESET}   {data['wifi_band']}, Ch {data['wifi_channel']}, {data['wifi_security']}, {data['wifi_rate']}")

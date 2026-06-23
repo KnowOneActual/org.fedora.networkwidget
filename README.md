@@ -85,7 +85,7 @@ To keep the widget minimal, advanced network details are **opt-in** and can be e
 
 1. Right-click the widget on your desktop and select **Configure Network Info Widget...** (or click the gear icon).
 2. Toggle any of the following features under the settings page:
-   - **Show VLAN details:** Extracts VLAN ID and parent interface.
+   - **Show Switch/LLDP details:** Displays switch port name and switch MAC address.
    - **Show VPN connection status:** Displays active VPN profiles.
    - **Show connection latency (Ping):** Computes latency to check network quality.
    - **Show Subnet CIDR & MAC address:** Displays local CIDR (e.g. `/24`) and hardware address.

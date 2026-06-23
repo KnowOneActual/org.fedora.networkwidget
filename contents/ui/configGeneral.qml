@@ -10,7 +10,7 @@ Item {
 
     property alias cfg_showBackground: showBackgroundCheckbox.checked
     property alias cfg_showIPv6: showIPv6Checkbox.checked
-    property alias cfg_showVlan: showVlanCheckbox.checked
+    property alias cfg_showLldp: showLldpCheckbox.checked
     property alias cfg_showVpn: showVpnCheckbox.checked
     property alias cfg_showLatency: showLatencyCheckbox.checked
     property alias cfg_showBandwidth: showBandwidthCheckbox.checked
@@ -34,9 +34,9 @@ Item {
         }
 
         CheckBox {
-            id: showVlanCheckbox
+            id: showLldpCheckbox
             Kirigami.FormData.label: i18n("Advanced Features:")
-            text: i18n("Show VLAN details")
+            text: i18n("Show Switch/LLDP details")
         }
 
         CheckBox {

@@ -2,6 +2,15 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.4.0] - 2026-06-23
+
+### Added
+- **Switch/LLDP Port & MAC Discovery:** Displays the upstream network switch port name and chassis MAC address via LLDP when connected to an ethernet network.
+- **LLDP connection configuration**: Configures NetworkManager connection profiles to listen for LLDP advertisements (`connection.lldp=enable-rx`).
+
+### Removed
+- **VLAN Info:** Removed native virtual VLAN detection settings and displays in favor of LLDP switch details.
+
 ## [1.3.0] - 2026-06-22
 
 ### Added

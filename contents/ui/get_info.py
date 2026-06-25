@@ -546,26 +546,35 @@ def main():
             iface_str = f"{RED}None{RESET}"
         elif data["wifi_ssid"] != "None":
             iface_str += f" (SSID: {data['wifi_ssid']}, Signal: {data['wifi_signal']}%)"
+        # codeql[py/clear-text-logging-sensitive-data]
         print(f"{BOLD}Interface:{RESET}       {iface_str}")
         
         if data["lldp_active"]:
+            # codeql[py/clear-text-logging-sensitive-data]
             print(f"{BOLD}Switch Port:{RESET}     {data['switch_port']} (on {data['switch_name']})")
+            # codeql[py/clear-text-logging-sensitive-data]
             print(f"{BOLD}Switch MAC:{RESET}      {data['switch_mac']}")
             
         if args.show_extended_wifi and data["wifi_ssid"] != "None" and data["wifi_band"] != "None":
+            # codeql[py/clear-text-logging-sensitive-data]
             print(f"{BOLD}Wi-Fi Details:{RESET}   {data['wifi_band']}, Ch {data['wifi_channel']}, {data['wifi_security']}, {data['wifi_rate']}")
             
+        # codeql[py/clear-text-logging-sensitive-data]
         print(f"{BOLD}Local IPv4:{RESET}      {data['local_ip']}")
         if data["gateway"] != "None":
+            # codeql[py/clear-text-logging-sensitive-data]
             print(f"{BOLD}Default Gateway:{RESET} {data['gateway']}")
             
         if not hide_ipv6_opt and data["local_ipv6"] != "None":
+            # codeql[py/clear-text-logging-sensitive-data]
             print(f"{BOLD}Local IPv6:{RESET}      {data['local_ipv6']}")
             
         if args.show_mac and data["mac_address"] != "None":
+            # codeql[py/clear-text-logging-sensitive-data]
             print(f"{BOLD}MAC Address:{RESET}     {data['mac_address']}")
             
         if data["vpn_active"]:
+            # codeql[py/clear-text-logging-sensitive-data]
             print(f"{BOLD}VPN:{RESET}             Active ({data['vpn_name']})")
         else:
             print(f"{BOLD}VPN:{RESET}             Disconnected")
@@ -573,16 +582,21 @@ def main():
         pub_ip = data["public_ip"]
         if pub_ip == "Offline":
             pub_ip = f"{RED}Offline{RESET}"
+        # codeql[py/clear-text-logging-sensitive-data]
         print(f"{BOLD}Public IPv4:{RESET}     {pub_ip}")
         
         if not hide_ipv6_opt and data["public_ipv6"] not in ["None", "Offline"]:
+            # codeql[py/clear-text-logging-sensitive-data]
             print(f"{BOLD}Public IPv6:{RESET}     {data['public_ipv6']}")
             
         if args.show_geo and data["geo_isp"] != "None":
+            # codeql[py/clear-text-logging-sensitive-data]
             print(f"{BOLD}ISP:{RESET}             {data['geo_isp']}")
+            # codeql[py/clear-text-logging-sensitive-data]
             print(f"{BOLD}Location:{RESET}        {data['geo_city']}, {data['geo_country']}")
             
         if data["dns"]:
+            # codeql[py/clear-text-logging-sensitive-data]
             print(f"{BOLD}DNS Servers:{RESET}     {', '.join(data['dns'])}")
         else:
             print(f"{BOLD}DNS Servers:{RESET}     None")

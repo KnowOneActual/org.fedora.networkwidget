@@ -120,5 +120,15 @@ To package the widget into a distributable `.plasmoid` archive, zip the project 
 zip -r org.fedora.networkwidget.plasmoid metadata.json contents/ preview.webp
 ```
 
+## 🔒 Security & Privacy
+
+This widget is designed with security and privacy as first-class citizens:
+- **Local-First Execution:** All network diagnostics (including interfaces, IPs, MAC addresses, VPNs, SSIDs, and LLDP details) are fetched locally using standard command-line tools.
+- **No Data Harvesting or Telemetry:** The project does not track, collect, log, or transmit any user data or configuration details. No telemetry or analytics exist in this codebase.
+- **Secure Lookups:** External connections are restricted to public IP and Geolocation resolution endpoints, and they only run if those features are explicitly enabled.
+- **Static Analysis Compliance:** Codebase health and security are monitored, ensuring zero high-severity issues (like remote logging or unsanitized command injection).
+
+For more detailed information or to report a vulnerability privately, please see our [SECURITY.md](SECURITY.md) policy.
+
 ## License
 GPL-3.0. Feel free to modify and share!
